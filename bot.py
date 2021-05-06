@@ -3,7 +3,10 @@ import os
 import subprocess
 import re
 #получение токена при запуске и возможно его сохранение
-bot = telebot.TeleBot('')
+file = open("Token", "r")
+token = file.read()
+file.close()
+bot = telebot.TeleBot(token)
 os.system("echo запущено")
 @bot.message_handler(content_types=['text'])
 def get_text_messages(message): 
@@ -20,18 +23,31 @@ def get_text_messages(message):
 			if not lst: 
 				lst = ['/root']
 			path="".join(lst)
-			os.chdir(path)
-			comm = subprocess.Popen('pwd', stdout=subprocess.PIPE) #отлавливать no such file or directory и stderr(-)
-			comm_out = comm.communicate()
+			try:
+				os.chdir(path)
+			except FileNotFoundError:
+				bot.send_message(message.from_user.id, "No such file or directory")
+			else:
+				comm = subprocess.Popen('pwd', stdout=subprocess.PIPE) 
+				comm_out = comm.communicate()				
 		elif(lst[0] == 'echo'):
-			bot.send_message(message.from_user.id, "нет")##
-		elif(lst[0] == ['export']):
-			bot.send_message(message.from_user.id, "нет")##
-		else:
-			comm = subprocess.Popen(message.text.split(' '), stdout=subprocess.PIPE) #отлавливать no such file or directory и stderr
+			comm = subprocess.Popen(lst, stdout=subprocess.PIPE) 
 			comm_out = comm.communicate()
-			print(comm_out)
+			print(comm_out)##
+		elif(lst[0] == 'export'):
+			c = "".join(lst)
+			print(message.text)
+			os.system(message.text)
+			bot.send_message(message.from_user.id, "не готово")##
+		else:
+			try:
+				comm = subprocess.Popen(message.text.split(' '), stdout=subprocess.PIPE) 
+				comm_out = comm.communicate()
+				print(comm_out)
+			except FileNotFoundError:
+				bot.send_message(message.from_user.id, "No such file or directory")
 		if (comm_out[0] != b''):
-			bot.send_message(message.from_user.id, comm_out) #отлавливать пустые строки
+			bot.send_message(message.from_user.id, comm_out) 
 bot.polling(none_stop=True, interval=0)
 #сделать логи по ID
+#добавить clear
